@@ -1,4 +1,4 @@
-open UiUtils
+open UiUtils;
 
 type state =
   | Idle

@@ -12,7 +12,7 @@ let make = () => {
     | Editor(id) => <EditPage />
     | Preview(id) => <PreviewPage />
     | NotFound => <NotFoundPage />
-    };}
+    }}
   </div>
 };
 

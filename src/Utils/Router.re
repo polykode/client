@@ -1,6 +1,6 @@
-open Relude
-open CoreUtils
-open ReasonReactRouter
+open Relude;
+open CoreUtils;
+open ReasonReactRouter;
 
 type page =
   | Home
@@ -31,4 +31,3 @@ let fromPage =
 let gotoPage = push << fromPage;
 
 let usePage = toPage << (u => u.path) << useUrl;
-
