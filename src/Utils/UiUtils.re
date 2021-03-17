@@ -1,4 +1,3 @@
-// open Belt
 open Relude;
 open CoreUtils;
 
@@ -20,6 +19,7 @@ let getEffect =
   | Pure(_) => IO.pureWithVoid(None)
   | Effectful(_, e) => e;
 
+// | Point-free reducer (style choice)
 let pfReducer = (fn, s, a) => fn((s, a));
 
 let useMegaReducer = (reducer, init) => {
