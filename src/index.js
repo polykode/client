@@ -3,7 +3,9 @@ import { createElement } from 'react';
 
 import { make as App } from './App.bs';
 
-const $root = document.createElement('root');
+import './style.css';
+
+const $root = document.createElement('div');
 document.body.appendChild($root);
 
 render(createElement(App, {}), $root);
