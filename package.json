@@ -7,15 +7,17 @@
     "url": "https://github.com/polykode/web-client/issues"
   },
   "scripts": {
-    "build": "yarn bs:build && yarn js:build",
-    "start": "node scripts/serve.js",
-    "js:build": "node scripts/build.js",
+    "build": "yarn bs:build && yarn bundle",
+    "start": "yarn serve",
+    "serve": "node scripts/serve.js",
     "bs:build": "bsb -clean-world -make-world",
     "bs:clean": "bsb -clean-world",
     "bs:watch": "bsb -make-world -w",
+    "bundle": "node scripts/build.js",
     "test": "jest",
+    "test:watch": "concurrently 'yarn start' 'yarn test --watch' -c 'magenta,blue' -n 'build,test'",
     "tw:gen": "node ./scripts/generate-tailwind-classes.js",
-    "test:watch": "concurrently 'yarn start' 'yarn test --watch' -c 'magenta,blue' -n 'build,test'"
+    "prepare": "yarn tw:gen"
   },
   "main": "index.js",
   "license": "MIT",
