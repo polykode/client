@@ -20,23 +20,19 @@ let getEffect =
   | Pure(_) => IO.pureWithVoid(None)
   | Effectful(_, e) => e;
 
-type reducer('s, 'a) = ('s, 'a) => reducerTransition('s, 'a);
+let pfReducer = (fn, s, a) => fn((s, a));
 
-let pfReducer: ((('s, 'a)) => 'r, 's, 'a) => 'r = (fn, s, a) => fn((s, a));
+let useMegaReducer = (reducer, init) => {
+  let (effState, dispatch) = React.useReducer(reducer << getState, init);
 
-let useMegaReducer:
-  (reducer('s, 'a), reducerTransition('s, 'a)) => ('s, 'a => unit) =
-  (reducer, init) => {
-    let (effState, dispatch) = React.useReducer(reducer << getState, init);
+  React.useEffect1(
+    () =>
+      effState
+      |> getEffect
+      |> IO.unsafeRunAsync(ignore << Result.map(Option.map(dispatch)))
+      |> const(None),
+    [|effState|],
+  );
 
-    React.useEffect1(
-      () =>
-        effState
-        |> getEffect
-        |> IO.unsafeRunAsync(ignore << Result.map(Option.map(dispatch)))
-        |> const(None),
-      [|effState|],
-    );
-
-    (effState |> getState, dispatch);
-  };
+  (effState |> getState, dispatch);
+};

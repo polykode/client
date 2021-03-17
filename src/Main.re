@@ -1,3 +1,0 @@
-
-ReactDOMRe.renderToElementWithId(<BasicApi />, "root")
-

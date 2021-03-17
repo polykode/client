@@ -1,5 +1,5 @@
 let (<<) = (f, g, x) => f(g(x));
-let ($) = (f, x) => f(x);
+let (^$) = (f, x) => f(x);
 
 let const: ('a, 'b) => 'a = (x, _) => x;
 
