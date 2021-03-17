@@ -1,6 +1,6 @@
-open Relude;
-open CoreUtils;
-open ReasonReactRouter;
+open Relude
+open CoreUtils
+open ReasonReactRouter
 
 type page =
   | Home
@@ -9,30 +9,26 @@ type page =
   | Preview(int)
   | NotFound;
 
-let toPage = path => {
-  let route =
-    switch (path) {
+let toPage =
+  Option.getOrElse(NotFound)
+  << (
+    fun
     | [] => Some(Home)
     | ["about"] => Some(About)
     | ["edit", id] => id |> Int.fromString |> Option.map(s => Editor(s))
     | ["preview", id] => id |> Int.fromString |> Option.map(s => Preview(s))
     | _ => None
-    };
-
-  route |> Option.getOrElse(NotFound);
-};
+  );
 
 let fromPage =
   fun
   | Home => "/"
   | About => "/about"
-  | Editor(id) => "/editor/" ++ String.fromInt(id)
+  | Editor(id) => "/edit/" ++ String.fromInt(id)
   | Preview(id) => "/preview/" ++ String.fromInt(id)
-  | NotFound => "/404"
+  | NotFound => "/404";
 
-let gotoPage = push << fromPage
+let gotoPage = push << fromPage;
 
-let useRouter = () => {
-  let url = useUrl();
-  url.path |> toPage;
-};
+let usePage = toPage << (u => u.path) << useUrl;
+
