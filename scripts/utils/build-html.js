@@ -8,11 +8,11 @@ const writeHtml = async ({ scripts = {}, styles = {}, ...data }) => {
   const outputPath = `${DISTDIR}/index.html`;
 
   const stylesStr = Object.entries(styles)
-    .map(([f, opts]) => `<link href=${f} rel="stylesheet" type="text/css" ${opts} />`)
+    .map(([f, opts]) => `<link href="${f}" rel="stylesheet" type="text/css" ${opts} />`)
     .join(' ');
 
   const scriptStr = Object.entries(scripts)
-    .map(([f, opts]) => `<script src=${f} ${opts}></script>`)
+    .map(([f, opts]) => `<script src="${f}" ${opts}></script>`)
     .join(' ');
 
   const template = await fs.promises.readFile(htmlPath, 'utf-8');

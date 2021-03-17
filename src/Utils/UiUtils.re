@@ -1,31 +1,41 @@
-open Belt
+// open Belt
+open Relude
+open CoreUtils
 
 let text = React.string
 
-type effect ('a) = unit => Js.Promise.t(option('a));
-type reducer ('s, 'a) = 's => 'a => ('s, effect('a));
+type effect ('a) = IO.t(option('a), Void.t);
 
-let noop: effect('a) = () => Js.Promise.resolve(None)
+type reducerTransition('s, 'a) = Pure('s) | Effectful('s, effect('a));
+
+let getState = fun
+| Pure(s) => s
+| Effectful(s, _) => s
+
+let getEffect = fun
+| Pure(_) => IO.pureWithVoid(None)
+| Effectful(_, e) => e
+
+type reducer ('s, 'a) = 's => 'a => reducerTransition('s, 'a);
 
 let pfReducer
 : ((('s, 'a)) => 'r) => 's => 'a => 'r
 = (fn, s, a) => fn((s, a))
 
 let useMegaReducer
-: reducer('s, 'a) => 's => ('s, 'a => unit)
+: reducer('s, 'a)
+  => reducerTransition('s, 'a)
+  => ('s, 'a => unit)
 = (reducer, init) => {
-  let reducer' = ((state, _), msg) => reducer(state, msg);
-  let ((state, effect), dispatch) = React.useReducer(reducer', (init, noop));
+  let (effState, dispatch) =
+    React.useReducer(reducer << getState, init);
 
-  React.useEffect1(() => {
-    let _ = effect()
-      |> Js.Promise.then_(d => {
-        let _ = d->Option.map(dispatch);
-        ()->Js.Promise.resolve;
-      })
-    None;
-  }, [|effect|]);
+  React.useEffect1(() => effState
+    |> getEffect
+    |> IO.unsafeRunAsync(ignore << Result.map(Option.map(dispatch)))
+    |> const(None)
+  , [|effState|]);
 
-  (state, dispatch)
+  (effState |> getState, dispatch)
 };
 

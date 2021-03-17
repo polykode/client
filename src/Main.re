@@ -3,18 +3,18 @@ open UiUtils
 type state = Idle | Pending | Success(string) | Failure(string)
 type msg = Fetch | DoSuccess(string) | DoFailure(string)
 
-let doStuff = () =>
-  Js.Promise.resolve(Some(DoFailure("Hello world")))
+let doStuff =
+  Relude.IO.pureWithVoid(Some(DoFailure("Hello world")))
 
 let update = fun
-| (Idle, Fetch) => (Pending, doStuff)
-| (Pending, DoSuccess(str)) => (Success(str), noop)
-| (Pending, DoFailure(err)) => (Failure(err), noop)
-| (Failure(_), Fetch) => (Pending, doStuff)
-| (state, _) => (state, noop)
+| (Idle, Fetch) => Effectful(Pending, doStuff)
+| (Pending, DoSuccess(str)) => Pure(Success(str))
+| (Pending, DoFailure(err)) => Pure(Failure(err))
+| (Failure(_), Fetch) => Effectful(Pending, doStuff)
+| (state, _) => Pure(state)
 
 module Test = {
-  let init = Idle;
+  let init = Pure(Idle);
 
   [@react.component]
   let make = () => {

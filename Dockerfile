@@ -1,6 +1,13 @@
-FROM node:14.15
+FROM ubuntu:20.04
 
-RUN echo "VERSION 1";
+ENV TERM xterm
+RUN ln -fs /usr/share/zoneinfo/America/New_York /etc/localtime
+
+RUN apt-get -y update && apt-get install -y nodejs npm curl wget
+
+RUN npm i -g n yarn && n 15.11
+
+RUN node -v
 
 WORKDIR /opt/app
 

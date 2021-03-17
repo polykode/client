@@ -18,7 +18,9 @@
   ],
   "bs-dependencies": [
     "reason-test-framework",
-    "reason-react"
+    "reason-react",
+    "bs-bastet",
+    "relude"
   ],
   "package-specs": {
     "module": "commonjs",
