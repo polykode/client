@@ -13,10 +13,12 @@
     "bs:build": "bsb -clean-world -make-world",
     "bs:clean": "bsb -clean-world",
     "bs:watch": "bsb -make-world -w",
+    "format": "bsrefmt src/**/*.re --in-place",
     "bundle": "node scripts/build.js",
     "test": "jest",
     "test:watch": "concurrently 'yarn start' 'yarn test --watch' -c 'magenta,blue' -n 'build,test'",
-    "tw:gen": "node ./scripts/generate-tailwind-classes.js"
+    "tw:gen": "node ./scripts/generate-tailwind-classes.js",
+    "prepare": "npm run tw:gen || true"
   },
   "main": "index.js",
   "license": "MIT",
