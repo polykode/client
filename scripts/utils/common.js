@@ -49,6 +49,8 @@ module.exports = {
 			PostCssPlugin({
 				plugins: [
 					require('postcss-import'),
+					require('postcss-preset-env'),
+					require('postcss-nested'),
 					require('tailwindcss')(tailwindConfig),
 					require('autoprefixer'),
 				],

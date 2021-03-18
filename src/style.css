@@ -1,24 +1,23 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
 
 .markdown-container {
   @apply tracking-normal leading-6;
-}
 
-.markdown-container h1,
-.markdown-container h2,
-.markdown-container h3,
-.markdown-container h4,
-.markdown-container h5,
-.markdown-container h6 {
-  @apply underline font-extrabold;
-}
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-extrabold underline;
+  }
 
-.markdown-container h1 { @apply text-4xl font-black; }
-.markdown-container h2 { @apply text-2xl; }
-.markdown-container h3 { @apply text-xl; }
-.markdown-container h4 { @apply text-base; }
-.markdown-container h5 { @apply text-sm; }
-.markdown-container h6 { @apply text-sm font-bold; }
+  h1 { @apply text-4xl font-black; }
+  h2 { @apply text-2xl; }
+  h3 { @apply text-xl; }
+  h4 { @apply text-base; }
+  h5 { @apply text-sm; }
+  h6 { @apply text-sm font-bold; }
+
+  code {
+    @apply p-5;
+  }
+}
 

@@ -1,8 +1,5 @@
-open Relude
-open CoreUtils
-
-/*const md = new MarkdownIt()*/
-/*console.log(md.parse(defaultContent));*/
+open Relude;
+open CoreUtils;
 
 let defaultOptions = [%raw "{
   langPrefix: 'language-',
@@ -13,78 +10,84 @@ let defaultOptions = [%raw "{
   html: false,
   quotes: '“”‘’',
   typographer: true,
-}"]
+}"];
 
-module MdIt = {
-  type t;
-  type token = {
-    [@bs.as "type"] kind: string,
+module Token = {
+  type t = {
+    [@bs.as "type"]
+    kind: string,
     info: string,
     content: string,
   };
+
+  let content = (b: t) => b.content
+  let kind = (b: t) => b.kind
+};
+
+module MdIt = {
+  type t;
   type options;
 
   [@bs.module "markdown-it"] external make: unit => t = "default";
-  [@bs.send "parse"] external parse': (t, string) => array(token) = "parse";
-  let parse = parse'; // t => List.fromArray << parse(t)
+  [@bs.send "parse"] external parse': (t, string) => array(Token.t) = "parse";
+  let parse = parse';
 
   type renderer;
   [@bs.get "renderer"] external getRenderer: t => renderer = "renderer";
-  [@bs.send "render"] external render': (renderer, array(token), options) => string = "render";
-  let render = (t, tokens) => t->getRenderer->render'(_, tokens, defaultOptions);
-}
+  [@bs.send "render"]
+  external render': (renderer, array(Token.t), options) => string = "render";
+  let render: (t, array(Token.t)) => string =
+    (t, tokens) => t->getRenderer->render'(_, tokens, defaultOptions);
+};
 
 module PState = {
-  type t = {
-    annotations: option(string)
-  }
+  type t = {annotations: option(string)};
 
-  let empty = { annotations: None }
-}
+  let empty = {annotations: None};
+};
 
 module CodeBlock = {
   type t = {
     lang: string,
     code: string,
     annotations: option(string),
-  }
+  };
 
-  let isAnnotation = String.startsWith(~search = "<!--@")
+  let isAnnotation = Predicate.(
+    (String.startsWith(~search="<!--@") << Token.content)
+      <&> (String.eq("inline") << Token.kind)
+  );
 
-  let codeBlock
-    : ((PState.t, MdIt.token)) => t
-    = (({ annotations }, token)) => {
+  let isCodeBlock = String.eq("fence") << Token.kind
+
+  let codeBlock: ((PState.t, Token.t)) => t =
+    (({annotations}, token)) => {
       lang: token.info,
       code: token.content,
-      annotations: annotations
-    }
+      annotations,
+    };
 
-  let fromMdTokens
-    : array((PState.t, MdIt.token)) => array(t)
-    = Array.map(codeBlock) << Array.filter(((b: MdIt.token) => b.kind === "fence") << snd)
-}
+  let fromMdTokens =
+    Array.map(codeBlock) << Array.filter(isCodeBlock << snd);
+};
 
-type reducerState = (PState.t, array((PState.t, MdIt.token)))
-
-let normalizeTokens
-: reducerState => MdIt.token => reducerState
-= ((state, arr), token) => {
-  let (nextState, item) = switch token {
-  | { kind: "fence" } as t =>
-    (PState.empty, (state, t))
-  | { kind: "inline" } as t when CodeBlock.isAnnotation(t.content) =>
-    ({ annotations: Some(t.content) }, (PState.empty, t))
-  | t =>
-    (state, (PState.empty, t))
-  };
+let normalizeTokens = ((state, arr), token) => {
+  let (nextState, item) =
+    switch (token) {
+    | t when CodeBlock.isCodeBlock(t) =>
+      (PState.empty, (state, t))
+    | t when CodeBlock.isAnnotation(t) =>
+      ({annotations: Some(t.content)}, (PState.empty, t))
+    | t =>
+      (state, (PState.empty, t))
+    };
 
   (nextState, Array.append(item, arr));
 };
 
+let make = MdIt.make;
 
-let make = MdIt.make
+let parse = md =>
+  snd << Array.foldLeft(normalizeTokens, (PState.empty, [||])) << MdIt.parse(md);
 
-let parse = md => snd << Array.foldLeft(normalizeTokens, (PState.empty, [||])) << MdIt.parse(md)
-
-let render = md => MdIt.render(md) << Array.map(snd)
-
+let render = md => MdIt.render(md) << Array.map(snd);

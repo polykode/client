@@ -1,4 +1,4 @@
-open UiUtils
+open UiUtils;
 /*open CoreUtils*/
 
 let defaultContent = "
@@ -30,27 +30,24 @@ main = do
 let make = (~id: int) => {
   open MarkdownParser;
   let md = make();
-  let tokens = defaultContent |> parse(md)
-  let htmlStr = tokens |> render(md)
-  let codeBlocks = tokens |> CodeBlock.fromMdTokens
+  let tokens = defaultContent |> parse(md);
+  let htmlStr = tokens |> render(md);
+  let codeBlocks = tokens |> CodeBlock.fromMdTokens;
 
   Js.log(htmlStr);
   Js.log(codeBlocks);
 
   <div>
-    <div className={Tailwind.(bg_blue_500)}>
-      {"HEader"->text}
-      {id->number}
-    </div>
+    <div className=Tailwind.(bg_blue_500)> "HEader"->text id->number </div>
     <div
-      className={Tailwind.(
+      className=Tailwind.(
         bg_blue_100
         <+> rounded_md
         <+> shadow_md
         <+> p_6
         <+> "markdown-container"
-      )}
-      dangerouslySetInnerHTML={{ "__html": htmlStr }}
+      )
+      dangerouslySetInnerHTML={"__html": htmlStr}
     />
-  </div>
+  </div>;
 };

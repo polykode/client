@@ -30,7 +30,7 @@
   "suffix": ".bs.js",
   "namespace": true,
   "warnings": {
-    "number": "+A-42-48",
+    "number": "+A-4-9-42-48",
     "warning": "+A-3-44-102-103"
   },
   "ppx-flags": [],
