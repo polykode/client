@@ -2,3 +2,23 @@
 @tailwind components;
 @tailwind utilities;
 
+.markdown-container {
+  @apply tracking-normal leading-6;
+}
+
+.markdown-container h1,
+.markdown-container h2,
+.markdown-container h3,
+.markdown-container h4,
+.markdown-container h5,
+.markdown-container h6 {
+  @apply underline font-extrabold;
+}
+
+.markdown-container h1 { @apply text-4xl font-black; }
+.markdown-container h2 { @apply text-2xl; }
+.markdown-container h3 { @apply text-xl; }
+.markdown-container h4 { @apply text-base; }
+.markdown-container h5 { @apply text-sm; }
+.markdown-container h6 { @apply text-sm font-bold; }
+

@@ -26,7 +26,7 @@ let update =
 let make = () => {
   let (state, dispatch) = useMegaReducer(update->pfReducer, init);
 
-  switch (state) {
+  switch state {
   | Idle =>
     <button onClick={_ => dispatch(Fetch)}> {text("Click me")} </button>
   | Pending => <div> {text("Loading")} </div>

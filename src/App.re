@@ -7,8 +7,8 @@ let make = () => {
   switch page {
   | Home => <HomePage />
   | About => <AboutPage />
-  | Editor(id) => <EditPage />
-  | Preview(id) => <PreviewPage />
+  | Editor(id) => <EditPage id={id} />
+  | Preview(id) => <PreviewPage id={id} />
   | NotFound => <NotFoundPage />
   }
 };

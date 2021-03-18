@@ -1,6 +1,7 @@
 node_modules/
 lib/
 **/*.bs.js
+*.log
 .merlin
 .bsb.lock
 dist/

@@ -20,7 +20,8 @@
     "reason-test-framework",
     "reason-react",
     "bs-bastet",
-    "relude"
+    "relude",
+    "@ryb73/bs-websockets"
   ],
   "package-specs": {
     "module": "es6",

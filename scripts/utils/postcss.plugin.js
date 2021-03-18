@@ -29,7 +29,7 @@ module.exports = (options = { plugins: [] }) => ({
         const css = await readFile(sourceFullPath);
 
         const env = process.env.NODE_ENV;
-        process.env.NODE_ENV = 'production';
+        //process.env.NODE_ENV = 'production';
         const result = await postcss(options.plugins).process(css, {
           from: sourceFullPath,
           to: tmpFilePath,
