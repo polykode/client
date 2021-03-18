@@ -19,6 +19,7 @@ module MdIt = {
   type t;
   type token = {
     [@bs.as "type"] kind: string,
+    info: string,
     content: string,
   };
   type options;
@@ -33,30 +34,57 @@ module MdIt = {
   let render = (t, tokens) => t->getRenderer->render'(_, tokens, defaultOptions);
 }
 
-let make = MdIt.make
+module PState = {
+  type t = {
+    annotations: option(string)
+  }
 
-type pState = {
-  annotation: MdIt.token
+  let empty = { annotations: None }
 }
 
-type reducerState = (option(pState), array((option(pState), MdIt.token)))
+module CodeBlock = {
+  type t = {
+    lang: string,
+    code: string,
+    annotations: option(string),
+  }
+
+  let isAnnotation = String.startsWith(~search = "<!--@")
+
+  let codeBlock
+    : ((PState.t, MdIt.token)) => t
+    = (({ annotations }, token)) => {
+      lang: token.info,
+      code: token.content,
+      annotations: annotations
+    }
+
+  let fromMdTokens
+    : array((PState.t, MdIt.token)) => array(t)
+    = Array.map(codeBlock) << Array.filter(((b: MdIt.token) => b.kind === "fence") << snd)
+}
+
+type reducerState = (PState.t, array((PState.t, MdIt.token)))
 
 let normalizeTokens
 : reducerState => MdIt.token => reducerState
 = ((state, arr), token) => {
-  let (nextState, group) = switch token {
+  let (nextState, item) = switch token {
   | { kind: "fence" } as t =>
-    (None, (state, t))
-  | { kind: "inline" } as t when String.startsWith(~search = "<!--@", t.content) =>
-    (Some({ annotation: t }), (None, t))
+    (PState.empty, (state, t))
+  | { kind: "inline" } as t when CodeBlock.isAnnotation(t.content) =>
+    ({ annotations: Some(t.content) }, (PState.empty, t))
   | t =>
-    (state, (None, t))
+    (state, (PState.empty, t))
   };
 
-  (nextState, Array.append(group, arr));
+  (nextState, Array.append(item, arr));
 };
 
-let parse = md => snd << Array.foldLeft(normalizeTokens, (None, [||])) << MdIt.parse(md)
+
+let make = MdIt.make
+
+let parse = md => snd << Array.foldLeft(normalizeTokens, (PState.empty, [||])) << MdIt.parse(md)
 
 let render = md => MdIt.render(md) << Array.map(snd)
 

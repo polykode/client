@@ -1,5 +1,5 @@
 open UiUtils
-open CoreUtils
+/*open CoreUtils*/
 
 let defaultContent = "
 # Hello world
@@ -28,10 +28,14 @@ main = do
 
 [@react.component]
 let make = (~id: int) => {
-  let md = MarkdownParser.make();
-  let htmlStr = MarkdownParser.(defaultContent |> parse(md) |> render(md));
+  open MarkdownParser;
+  let md = make();
+  let tokens = defaultContent |> parse(md)
+  let htmlStr = tokens |> render(md)
+  let codeBlocks = tokens |> CodeBlock.fromMdTokens
 
   Js.log(htmlStr);
+  Js.log(codeBlocks);
 
   <div>
     <div className={Tailwind.(bg_blue_500)}>
