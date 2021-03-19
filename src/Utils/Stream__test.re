@@ -2,8 +2,8 @@ module Js' = Js;
 open Relude
 open TestFramework
 
-describe("Stream.make, Stream.subscribe", ({ testAsync }) => {
-  testAsync("should create a stream on numbers and subscribe to it", ({ expect, callback }) => {
+describe("Stream.make, Stream.fork", ({ testAsync }) => {
+  testAsync("should create a stream on numbers and fork to it", ({ expect, callback }) => {
     let stream = Stream.make((~next, ~complete, ~cancel) => {
       next(5);
       next(25);
@@ -12,7 +12,7 @@ describe("Stream.make, Stream.subscribe", ({ testAsync }) => {
       None;
     });
 
-    let _ = stream |> Stream.subscribe(fun
+    let _ = stream |> Stream.fork(fun
       | Complete(x) => {
         expect.string(x).toEqual("end");
         callback() |> ignore;
@@ -32,7 +32,7 @@ describe("Stream.make, Stream.subscribe", ({ testAsync }) => {
       None;
     });
 
-    let _ = stream |> Stream.subscribe(fun
+    let _ = stream |> Stream.fork(fun
       | Complete(x) => {
         expect.string(x).toEqual("end");
         callback() |> ignore;
@@ -50,7 +50,7 @@ describe("Stream.make, Stream.subscribe", ({ testAsync }) => {
       Some(mockCleanupFunction);
     });
 
-    let _ = stream |> Stream.subscribe(fun
+    let _ = stream |> Stream.fork(fun
       | Cancelled => {
         expect.value(mockCleanupFunction |> Mock.calls).toEqual([|
           [|Js'.undefined|]
@@ -67,7 +67,7 @@ describe("Stream.make, Stream.subscribe", ({ testAsync }) => {
       Some(mockCleanupFunction);
     });
 
-    let cleanup = stream |> Stream.subscribe(fun
+    let cleanup = stream |> Stream.fork(fun
       | Cancelled => callback()
       | _ => ()
     );
@@ -76,6 +76,28 @@ describe("Stream.make, Stream.subscribe", ({ testAsync }) => {
     expect.value(mockCleanupFunction |> Mock.calls).toEqual([|
       [|Js'.undefined|]
     |]);
+  });
+});
+
+describe("Stream.map", ({ testAsync }) => {
+  testAsync("should map over values", ({ expect, callback }) => {
+    let stream = Stream.make((~next, ~complete, ~cancel) => {
+      next(5);
+      next(25);
+      next(500);
+      complete("end");
+      None;
+    });
+
+    let _ = stream |> Stream.map(x => x * 2) |> Stream.fork(fun
+      | Complete(x) => {
+        expect.string(x).toEqual("end");
+        callback() |> ignore;
+      }
+      | Next(x) =>
+        expect.bool([|10, 50, 1000|] |> Array.containsBy(Int.eq, x)).toBeTrue()
+      | _ => ()
+    );
   });
 });
 

@@ -1,22 +1,23 @@
 open CoreUtils
-module Option = Relude.Option
+open Relude
+open BsBastet.Interface
 
 type state('a, 'd) = Next('a) | Complete('d) | Cancelled;
 
-type unsubFn = unit => unit;
+type cleanupFn = unit => unit;
 
 type t('a, 'd) =
   (~next: 'a => unit, ~complete: 'd => unit, ~cancel: unit => unit)
-    => option(unsubFn);
+    => option(cleanupFn);
+type stream('a, 'd) = t('a, 'd) // alias for t
 
 let make: t('a, 'd) => t('a, 'd) = id;
 
-let subscribe = (handler, stream) => {
-  let unsubfn = ref(None);
-  let cleanup = () =>
-    unsubfn.contents |> Option.map(f => f()) |> ignore;
-
+let fork = (handler, stream) => {
   let isComplete = ref(false);
+  let cleanupFn = ref(None);
+  let cleanup = () =>
+    cleanupFn.contents |> Option.map(f => f()) |> ignore;
 
   let transition = ignore << Option.map(handler) << fun
     | (Complete(_) | Cancelled) as state => {
@@ -30,14 +31,14 @@ let subscribe = (handler, stream) => {
   let complete = value => transition(Complete(value));
   let cancel = () => transition(Cancelled);
 
-  unsubfn.contents =
+  cleanupFn.contents =
     stream(~next = next, ~complete = complete, ~cancel = cancel);
 
   cancel
 };
 
 let map = (fn, stream) => make((~next, ~complete, ~cancel) =>
-  stream |> subscribe(fun
+  stream |> fork(fun
     | Next(v) => v |> fn |> next |> ignore
     | Complete(x) => x |> complete |> ignore
     | Cancelled => cancel()
