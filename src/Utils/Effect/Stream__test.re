@@ -4,7 +4,7 @@ open TestFramework
 
 describe("Stream.make, Stream.fork", ({ testAsync }) => {
   testAsync("should create a stream on numbers and fork to it", ({ expect, callback }) => {
-    let stream = Stream.make((~next, ~complete, ~cancel) => {
+    let stream = Stream.make((~next, ~complete, ~cancel as _) => {
       next(5);
       next(25);
       next(500);
@@ -24,7 +24,7 @@ describe("Stream.make, Stream.fork", ({ testAsync }) => {
   });
 
   testAsync("should stop accepting values after complete", ({ expect, callback }) => {
-    let stream = Stream.make((~next, ~complete, ~cancel) => {
+    let stream = Stream.make((~next, ~complete, ~cancel as _) => {
       next(5);
       next(25);
       complete("end");
@@ -45,7 +45,7 @@ describe("Stream.make, Stream.fork", ({ testAsync }) => {
 
   testAsync("should cleanup on cancel from inside", ({ expect, callback }) => {
     let mockCleanupFunction = Mock.fn();
-    let stream = Stream.make((~next, ~complete, ~cancel) => {
+    let stream = Stream.make((~next as _, ~complete as _, ~cancel) => {
       Js'.Global.setTimeout(cancel, 0) |> ignore;
       Some(mockCleanupFunction);
     });
@@ -63,7 +63,7 @@ describe("Stream.make, Stream.fork", ({ testAsync }) => {
 
   testAsync("should cleanup on cancel from outside", ({ expect, callback }) => {
     let mockCleanupFunction = Mock.fn();
-    let stream = Stream.make((~next, ~complete, ~cancel) => {
+    let stream = Stream.make((~next as _, ~complete as _, ~cancel as _) => {
       Some(mockCleanupFunction);
     });
 
@@ -81,7 +81,7 @@ describe("Stream.make, Stream.fork", ({ testAsync }) => {
 
 describe("Stream.map", ({ testAsync }) => {
   testAsync("should map over values", ({ expect, callback }) => {
-    let stream = Stream.make((~next, ~complete, ~cancel) => {
+    let stream = Stream.make((~next, ~complete, ~cancel as _) => {
       next(5);
       next(25);
       next(500);

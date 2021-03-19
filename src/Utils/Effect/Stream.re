@@ -1,6 +1,5 @@
 open CoreUtils
 open Relude
-open BsBastet.Interface
 
 type state('a, 'd) = Next('a) | Complete('d) | Cancelled;
 

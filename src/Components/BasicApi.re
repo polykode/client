@@ -16,10 +16,10 @@ let init = Pure(Idle);
 
 let update =
   fun
-  | (Idle, Fetch) => Effectful(Pending, doStuff)
+  | (Idle, Fetch) => EffIO(Pending, doStuff)
   | (Pending, DoSuccess(str)) => Pure(Success(str))
   | (Pending, DoFailure(err)) => Pure(Failure(err))
-  | (Failure(_), Fetch) => Effectful(Pending, doStuff)
+  | (Failure(_), Fetch) => EffIO(Pending, doStuff)
   | (state, _) => Pure(state);
 
 [@react.component]
