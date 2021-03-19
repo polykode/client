@@ -11,10 +11,7 @@ module type EFF = {
 module StreamEff: EFF with type t('a) = Stream.t('a, Void.t) = {
   type t('a) = Stream.t('a, Void.t);
 
-  let fork = fn => Stream.fork(fun
-    | Next(d) => fn(d)
-    | _ => ()
-  );
+  let fork = fn => Stream.fork(fun | Next(d) => fn(d) | _ => ());
 };
 
 module IOEff: EFF with type t('a) = IO.t('a, Void.t) = {
