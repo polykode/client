@@ -1,11 +1,13 @@
 module.exports = {
-  "moduleDirectories": [
-    "node_modules"
+  moduleDirectories: [ 'node_modules' ],
+  roots: [ 'src' ],
+  testMatch: [ '**/*__test.bs.js' ],
+  moduleFileExtensions: ['js'],
+  testEnvironment: 'jsdom',
+  transformIgnorePatterns: [
+    //'node_modules/(?!(bs-platform))',
+    '/node_modules/(?!(@.*/)?(bs-.*|reason-.*)/).+\\.js$',
   ],
-  "roots": [
-    "tests"
-  ],
-  "testMatch": [
-    "**/*__test.bs.js"
-  ],
+  collectCoverage: true,
+  coveragePathIgnorePatterns: ['node_modules', 'scripts'],
 };

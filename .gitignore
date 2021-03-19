@@ -6,3 +6,4 @@ lib/
 .bsb.lock
 dist/
 src/Vendor/Tailwind.re
+coverage
