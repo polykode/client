@@ -1,23 +1,37 @@
-module Option = Relude.Option;
+open CoreUtils
+module Option = Relude.Option
 
-type state('a) = Next('a) | Complete('a) | Cancelled;
+type state('a, 'd) = Next('a) | Complete('d) | Cancelled;
 
 type unsubFn = unit => unit;
 
-type t('a) = (~next: 'a => unit, ~complete: 'a => unit, ~cancel: unit => unit) => option(unsubFn);
+type t('a, 'd) =
+  (~next: 'a => unit, ~complete: 'd => unit, ~cancel: unit => unit)
+    => option(unsubFn);
 
-let make = cb: t('a) => cb;
+let make: t('a, 'd) => t('a, 'd) = id;
 
 let subscribe = (handler, stream) => {
   let unsubfn = ref(None);
-  let next = value => handler(Next(value))
-  let complete = value => handler(Complete(value))
-  let cancel = () => {
+  let cleanup = () =>
     unsubfn.contents |> Option.map(f => f()) |> ignore;
-    handler(Cancelled);
-  };
 
-  unsubfn.contents = stream(~next = next, ~complete = complete, ~cancel = cancel);
+  let isComplete = ref(false);
+
+  let transition = ignore << Option.map(handler) << fun
+    | (Complete(_) | Cancelled) as state => {
+      isComplete.contents = true;
+      cleanup();
+      Some(state)
+    }
+    | state => if (isComplete.contents) None else Some(state);
+
+  let next = value => transition(Next(value))
+  let complete = value => transition(Complete(value));
+  let cancel = () => transition(Cancelled);
+
+  unsubfn.contents =
+    stream(~next = next, ~complete = complete, ~cancel = cancel);
 
   cancel
 };
