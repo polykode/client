@@ -1,7 +1,11 @@
 open CoreUtils
 open Relude
 
-type state('a, 'd) = Next('a) | Complete('d) | Cancelled;
+module State = {
+  [@bs.deriving accessors]
+  type t('a, 'd) = Next('a) | Complete('d) | Cancelled;
+}
+open State;
 
 type cleanupFn = unit => unit;
 
@@ -26,8 +30,8 @@ let fork = (handler, stream) => {
     }
     | state => if (isComplete.contents) None else Some(state);
 
-  let next = value => transition(Next(value))
-  let complete = value => transition(Complete(value));
+  let next = transition << State.next;
+  let complete = transition << State.complete;
   let cancel = () => transition(Cancelled);
 
   cleanupFn.contents =
