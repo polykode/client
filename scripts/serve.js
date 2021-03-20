@@ -28,7 +28,7 @@ build({
 
 	// html rebuild
 	chokidar
-		.watch('src/**/*.html', { interval: 0 })
+		.watch('src/**/*.html', { interval: 200 })
 		.on('all', html);
 
 	// Start dev server

@@ -13,15 +13,12 @@ let defaultOptions = [%raw "{
 }"];
 
 module Token = {
+  [@bs.deriving accessors]
   type t = {
-    [@bs.as "type"]
-    kind: string,
+    [@bs.as "type"] kind: string,
     info: string,
     content: string,
   };
-
-  let content = (b: t) => b.content
-  let kind = (b: t) => b.kind
 };
 
 module MdIt = {
@@ -42,11 +39,11 @@ module MdIt = {
 
 module PState = {
   type t = {annotations: option(string)};
-
   let empty = {annotations: None};
 };
 
 module CodeBlock = {
+  [@bs.deriving accessors]
   type t = {
     lang: string,
     code: string,

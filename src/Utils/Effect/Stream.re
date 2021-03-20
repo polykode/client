@@ -1,4 +1,5 @@
 open CoreUtils
+open Predicate
 open Relude
 
 module State = {
@@ -12,23 +13,30 @@ type cleanupFn = unit => unit;
 type t('a, 'd) =
   (~next: 'a => unit, ~complete: 'd => unit, ~cancel: unit => unit)
     => option(cleanupFn);
-type stream('a, 'd) = t('a, 'd) // alias for t
 
-let make: t('a, 'd) => t('a, 'd) = id;
+let make
+: t('a, 'd) => t('a, 'd)
+= id;
 
-let fork = (handler, stream) => {
+let fork
+: (State.t('a, 'd) => unit) => t('a, 'd) => cleanupFn
+= (handler, stream) => {
   let isComplete = ref(false);
   let cleanupFn = ref(None);
   let cleanup = () =>
     cleanupFn.contents |> Option.map(f => f()) |> ignore;
 
-  let transition = ignore << Option.map(handler) << fun
-    | (Complete(_) | Cancelled) as state => {
-      isComplete.contents = true;
-      cleanup();
-      Some(state)
-    }
-    | state => if (isComplete.contents) None else Some(state);
+  let transition = ignore
+    << Option.map(
+      handler << fun
+        | (Complete(_) | Cancelled) as state => {
+          isComplete.contents = true;
+          cleanup();
+          state
+        }
+        | state => state
+    )
+    << boolToOption(!isComplete.contents);
 
   let next = transition << State.next;
   let complete = transition << State.complete;
@@ -40,9 +48,11 @@ let fork = (handler, stream) => {
   cancel
 };
 
-let map = (fn, stream) => make((~next, ~complete, ~cancel) =>
+let map
+: ('a => 'b) => t('a, 'd) => t('b, 'd)
+= (fn, stream) => make((~next, ~complete, ~cancel) =>
   stream |> fork(fun
-    | Next(v) => v |> fn |> next |> ignore
+    | Next(x) => x |> fn |> next |> ignore
     | Complete(x) => x |> complete |> ignore
     | Cancelled => cancel()
   ) |> Option.some);

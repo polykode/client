@@ -8,8 +8,8 @@ module type EFF = {
   let fork: ('a => unit) => t('a) => cleanup;
 }
 
-module StreamEff: EFF with type t('a) = Stream.t('a, Void.t) = {
-  type t('a) = Stream.t('a, Void.t);
+module StreamEff: EFF with type t('a) = Stream.t('a, 'a) = {
+  type t('a) = Stream.t('a, 'a);
 
   let fork = fn => Stream.fork(fun | Next(d) => fn(d) | _ => ());
 };
