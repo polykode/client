@@ -57,3 +57,5 @@ let map
     | Cancelled => cancel()
   ) |> Option.some);
 
+let const = x => map(CoreUtils.const(x));
+
