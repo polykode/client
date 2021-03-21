@@ -3,7 +3,6 @@ open UiUtils
 open Relude
 open CoreUtils
 module Js = Js'
-/*open CoreUtils*/
 
 let defaultContent = "
 # Hello world
@@ -40,7 +39,7 @@ type state =
 [@bs.deriving accessors]
 type msg = Run(string, string) | AddResults(string);
 
-let executeMarkdown = (id, mdContent) => Stream.make((~next, ~complete as _, ~cancel as _) => {
+let executeMarkdown = (_id, _mdContent) => Stream.make((~next, ~complete as _, ~cancel as _) => {
   let m = ref(0);
   let t = Js.Global.setInterval(() => {
     m.contents = m.contents + 1;
@@ -55,8 +54,8 @@ let init = Pure(Idle);
 
 let update = fun
 | (_, Run(id, md)) => EffStream(Pending, md |> executeMarkdown(id) |> Stream.map(Option.some << addResults))
-| (_, AddResults(data)) => Pure(Success(data))
-| (s, _) => Pure(s);
+| (_, AddResults(data)) => Pure(Success(data));
+/*| (s, _) => Pure(s)*/
 
 [@react.component]
 let make = (~id: int) => {

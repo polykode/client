@@ -29,8 +29,9 @@ module MakeStateMachine(M: StateChart) = {
     let getState = () => state.contents;
     let rec dispatch = act => {
       let setState = s => {
-        onStateChange(dispatch, s) |> ignore;
+        let hasUpdated = s !== state.contents;
         state.contents = s;
+        if (hasUpdated) onStateChange(dispatch, s) |> ignore;
         s;
       };
 
@@ -43,5 +44,6 @@ module MakeStateMachine(M: StateChart) = {
 
     (getState, dispatch);
   }
+
 }
 

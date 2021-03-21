@@ -5,7 +5,7 @@ open FSM;
 let sendWsData
 : BsWebSocket.t => string => Effect.IOEff.t('string)
 = (ws, data) => IO.async(resolve => {
-  ws->BsWebSocket.send(data);
+  ws->BsWebSocket.send(data |> debug(">> sending datra"));
   () |> Result.ok |> resolve;
 });
 
@@ -45,7 +45,8 @@ let wsDataStream = ws => Stream.make((~next, ~complete as _, ~cancel) => {
   ws->BsWebSocket.onMessage(next << BsWebSocket.MessageEvent.data)
   ws->BsWebSocket.onError(_ => cancel());
   ws->BsWebSocket.onClose(_ => cancel());
-  Some(() => BsWebSocket.close(ws))
+  None;
+  /*Some(() => BsWebSocket.close(ws))*/
 });
 
 // IO ?(OnConnectionOpen w | Error e)

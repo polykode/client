@@ -20,7 +20,7 @@ let getState = fun
 let forkEffect = fn => fun
   | Pure(_) => Some(noop)
   | EffIO(_, eff) => eff |> Effect.IOEff.fork(fn) |> Option.some
-  | EffStream(s, eff) => eff |> Effect.StreamEff.fork(fn) |> const(None)
+  | EffStream(_, eff) => eff |> Effect.StreamEff.fork(fn) |> const(None)
 
 // | Point-free reducer (style choice)
 let pf = (fn, s, a) => fn((s, a));
