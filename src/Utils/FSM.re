@@ -45,5 +45,17 @@ module MakeStateMachine(M: StateChart) = {
     (getState, dispatch);
   }
 
+  let use = init => {
+    let (state, setState) = React.useState(_ => init);
+    let dispatch = React.useRef(_ => ());
+
+    React.useEffect0(() => {
+      let (_, disp) = make(init, (_, s) => setState(_ => s))
+      dispatch.current = disp;
+      None; // TODO: Cleanup?
+    });
+    
+    (state, dispatch);
+  };
 }
 
