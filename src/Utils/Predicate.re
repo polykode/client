@@ -5,5 +5,5 @@ let (<|>) = (a, b, x) => a(x) || b(x);
 
 let (<&>) = (a, b, x) => a(x) && b(x);
 
-let boolToOption = (p, v) => if (p) Some(v) else None
+let toOption = (p, v) => if (p(v)) Some(v) else None
 

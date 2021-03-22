@@ -1,4 +1,4 @@
-open Predicate;
+// open CoreUtils;
 open Relude.Globals;
 
 module State = {
@@ -25,17 +25,21 @@ let fork
   let cleanup = () =>
     cleanupFn.contents |> Option.map(f => f()) |> ignore;
 
+  let onTransition = fun
+    | Complete(_) => {
+      isComplete.contents = true;
+      // TODO: Should cleanup on complete?
+    }
+    | Cancelled => {
+      isComplete.contents = true;
+      cleanup();
+    }
+    | Next(_) => ();
+
   let transition = ignore
-    << Option.map(
-      handler << fun
-        | (Complete(_) | Cancelled) as state => {
-          isComplete.contents = true;
-          cleanup();
-          state
-        }
-        | state => state
-    )
-    << boolToOption(!isComplete.contents);
+    << Option.map(handler)
+    << Option.tap(onTransition)
+    << Predicate.toOption(_ => !isComplete.contents);
 
   let next = transition << State.next;
   let complete = transition << State.complete;
@@ -48,7 +52,7 @@ let fork
 };
 
 let map
-: ('a => 'b) => t('a, 'd) => t('b, 'd)
+: ('a => 'b) => t('a, 'c) => t('b, 'c)
 = (fn, stream) => make((~next, ~complete, ~cancel) =>
   stream |> fork(fun
     | Next(x) => x |> fn |> next |> ignore

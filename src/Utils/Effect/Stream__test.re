@@ -26,18 +26,19 @@ describe("Stream.make, Stream.fork", ({ testAsync }) => {
     let stream = Stream.make((~next, ~complete, ~cancel as _) => {
       next(5);
       next(25);
-      complete("end");
+      complete("end1");
       next(500);
       None;
     });
 
     let _ = stream |> Stream.fork(fun
       | Complete(x) => {
-        expect.string(x).toEqual("end");
+        expect.string(x).toEqual("end1");
         callback() |> ignore;
       }
-      | Next(x) =>
+      | Next(x) => {
         expect.bool([|5, 25|] |> Array.containsBy(Int.eq, x)).toBeTrue()
+      }
       | _ => ()
     );
   });
@@ -95,6 +96,26 @@ describe("Stream.map", ({ testAsync }) => {
       }
       | Next(x) =>
         expect.bool([|10, 50, 1000|] |> Array.containsBy(Int.eq, x)).toBeTrue()
+      | _ => ()
+    );
+  });
+
+  testAsync("should map over different types", ({ expect, callback }) => {
+    let stream = Stream.make((~next, ~complete, ~cancel as _) => {
+      next(5);
+      next(25);
+      next(500);
+      complete("end");
+      None;
+    });
+
+    let _ = stream |> Stream.map(Int.toString) |> Stream.fork(fun
+      | Complete(x) => {
+        expect.string(x).toEqual("end");
+        callback() |> ignore;
+      }
+      | Next(x) =>
+        expect.bool([|"5", "25", "500"|] |> Array.containsBy(String.eq, x)).toBeTrue()
       | _ => ()
     );
   });

@@ -1,77 +1,69 @@
 open Relude.Globals;
-open CoreUtils;
+/*open CoreUtils;*/
 open FSM;
-
-let sendWsData
-: BsWebSocket.t => string => Effect.IOEff.t('string)
-= (ws, data) => IO.async(resolve => {
-  ws->BsWebSocket.send(data |> debug(">> sending datra"));
-  () |> Result.ok |> resolve;
-});
 
 type retryCount = int;
 type data = string;
 type error = string;
 
 [@bs.deriving accessors]
-type state' =
+type stateT('ws) =
   | Idle
   | Connecting
-  | Connected(BsWebSocket.t)
-  | ConnectedRxData(BsWebSocket.t, data)
+  | Connected('ws)
+  | ConnectedRxData('ws, data)
   | AttemptingRetry(retryCount)
   | ConnectionFailed(retryCount)
   | Disconnected
   | Failure(error);
 
+let showState = fun
+  | Idle => "Idle"
+  | Connecting => "Connecting"
+  | Connected(_) => "Connected(<conn>)"
+  | ConnectedRxData(_, data) => "ConnectedRxData(<conn>, " ++ data ++ ")"
+  | AttemptingRetry(retryCount) => "AttemptingRetry(" ++ Int.toString(retryCount) ++ ")"
+  | ConnectionFailed(retryCount) => "ConnectionFailed(" ++ Int.toString(retryCount) ++ ")"
+  | Disconnected => "Disconnected"
+  | Failure(error) => "Failure(" ++ error ++ ")";
+
 [@bs.deriving accessors]
-type msg' =
+type msgT('ws) =
   | Connect
-  | OnConnectionOpen(BsWebSocket.t)
+  | OnConnectionOpen('ws)
   | OnData(data)
   | SendData(data)
   | OnFailure(error)
   | Retry;
 
-let createConnection = IO.async(resolve => {
-  open BsWebSocket;
-  let ws = make("wss://echo.websocket.org");
-  ws->onError(resolve << Result.error << const("fuck"));
-  ws->onClose(resolve << Result.error << const("disconnected"));
-  ws->onOpen(resolve << Result.ok << const(ws));
-});
-
-let wsDataStream = ws => Stream.make((~next, ~complete as _, ~cancel) => {
-  ws->BsWebSocket.onMessage(next << BsWebSocket.MessageEvent.data)
-  ws->BsWebSocket.onError(_ => cancel());
-  ws->BsWebSocket.onClose(_ => cancel());
-  None;
-  /*Some(() => BsWebSocket.close(ws))*/
-});
-
-module type WebsocketConfig = {
-  type data;
-  type error;
+module type WebsocketApi = {
+  type t
 
   let maxAutoRetries: int;
-  let url: string;
+  let createConnection: IO.t(t, string);
+  let sendData: t => string => Effect.IOEff.t(unit);
+  let getDataStream: t => Effect.StreamEff.t(string);
 };
 
-module WSStateChart = (M: WebsocketConfig) => {
-  type state = state';
-  type msg = msg';
+module WSStateChart = (WS: WebsocketApi) => {
+  type state = stateT(WS.t);
+  type msg = msgT(WS.t);
+
+  let connIO = WS.createConnection;
 
   // IO ?(OnConnectionOpen w | Error e)
-  let connect = createConnection |> IO.mapHandleError(Option.some << onConnectionOpen, Option.some << onFailure);
+  let connect = connIO |> IO.mapHandleError(Option.some << onConnectionOpen, Option.some << onFailure);
 
   // IO ?(OnConnectionOpen w | Retry)
-  let retryConnection = createConnection |> IO.mapHandleError(Option.some << onConnectionOpen, const(Some(Retry)))
+  let retryConnection = connIO |> IO.mapHandleError(Option.some << onConnectionOpen, const(Some(Retry)))
 
-  // IO ?(OnConnectionOpen w | Retry)
-  let retryConnectionManual = createConnection |> IO.mapHandleError(Option.some << onConnectionOpen, const(None))
+  // IO ?(OnConnectionOpen w)
+  let retryConnectionManual = connIO |> IO.mapHandleError(Option.some << onConnectionOpen, const(None))
 
-  // Stream ?(OnData m)
-  let streamData = ws => wsDataStream(ws) |> Stream.map(Option.some << onData)
+  // WS.t => Stream ?(OnData m)
+  let streamData
+    : WS.t => Effect.StreamEff.t(option(msg))
+    = Stream.map(Option.some << onData) << WS.getDataStream;
 
   let update
     : ((state, msg)) => transitionType(state, msg)
@@ -83,11 +75,11 @@ module WSStateChart = (M: WebsocketConfig) => {
 
     // Data
     | ((Connected(ws) | ConnectedRxData(ws, _)) as s, SendData(data)) =>
-        EffIO(s, sendWsData(ws, data) |> IO.map(const(None)))
+        EffIO(s, WS.sendData(ws, data) |> IO.map(const(None)))
 
     // On failure
     | (Connected(_) | ConnectedRxData(_) | Connecting, OnFailure(_)) =>
-        EffIO(ConnectionFailed(M.maxAutoRetries), retryConnection)
+        EffIO(ConnectionFailed(WS.maxAutoRetries), retryConnection)
     | (AttemptingRetry(n), OnFailure(_)) => EffIO(ConnectionFailed(n - 1), retryConnection)
 
     // Auto and manual retrying
@@ -97,5 +89,5 @@ module WSStateChart = (M: WebsocketConfig) => {
     | (s, _) => Pure(s)
 };
 
-module Make = (M: WebsocketConfig) => MakeStateMachine(WSStateChart(M));
+module Make = (WS: WebsocketApi) => MakeStateMachine(WSStateChart(WS));
 

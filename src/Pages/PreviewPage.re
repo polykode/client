@@ -36,7 +36,6 @@ let make = (~id: int) => {
   /*Js.log(codeBlocks);*/
 
   let (state, dispatch) = PolykodeCore.Machine.use(Websockets.Idle);
-  Js.log2(">> state", state);
 
   React.useEffect0(() => {
     dispatch(Websockets.Connect);
@@ -44,7 +43,7 @@ let make = (~id: int) => {
   });
 
   React.useEffect1(() => {
-    Js.log2(">> State change", state);
+    Js.log2(">> State change", state |> Websockets.showState);
     None;
   }, [|state|]);
 
