@@ -1,6 +1,5 @@
-open CoreUtils
-open Predicate
-open Relude
+open Predicate;
+open Relude.Globals;
 
 module State = {
   [@bs.deriving accessors]
@@ -57,5 +56,5 @@ let map
     | Cancelled => cancel()
   ) |> Option.some);
 
-let const = x => map(CoreUtils.const(x));
+let const = x => map(Relude.Globals.const(x));
 

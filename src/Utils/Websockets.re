@@ -1,4 +1,4 @@
-open Relude;
+open Relude.Globals;
 open CoreUtils;
 open FSM;
 
@@ -9,9 +9,9 @@ let sendWsData
   () |> Result.ok |> resolve;
 });
 
+type retryCount = int;
 type data = string;
 type error = string;
-type retryCount = int;
 
 [@bs.deriving accessors]
 type state' =
@@ -49,35 +49,45 @@ let wsDataStream = ws => Stream.make((~next, ~complete as _, ~cancel) => {
   /*Some(() => BsWebSocket.close(ws))*/
 });
 
-// IO ?(OnConnectionOpen w | Error e)
-let connect = createConnection |> IO.mapHandleError(Option.some << onConnectionOpen, Option.some << onFailure);
+module type WebsocketConfig = {
+  type data;
+  type error;
 
-// IO ?(OnConnectionOpen w | Retry)
-let retryConnection = createConnection |> IO.mapHandleError(Option.some << onConnectionOpen, const(Some(Retry)))
+  let maxAutoRetries: int;
+  let url: string;
+};
 
-// IO ?(OnConnectionOpen w | Retry)
-let retryConnectionManual = createConnection |> IO.mapHandleError(Option.some << onConnectionOpen, const(None))
-
-// Stream ?(OnData m)
-let streamData = ws => wsDataStream(ws) |> Stream.map(Option.some << onData)
-
-module WSStateChart = {
+module WSStateChart = (M: WebsocketConfig) => {
   type state = state';
   type msg = msg';
 
-  let maxRetries = 3;
+  // IO ?(OnConnectionOpen w | Error e)
+  let connect = createConnection |> IO.mapHandleError(Option.some << onConnectionOpen, Option.some << onFailure);
 
-  let update = fun
+  // IO ?(OnConnectionOpen w | Retry)
+  let retryConnection = createConnection |> IO.mapHandleError(Option.some << onConnectionOpen, const(Some(Retry)))
+
+  // IO ?(OnConnectionOpen w | Retry)
+  let retryConnectionManual = createConnection |> IO.mapHandleError(Option.some << onConnectionOpen, const(None))
+
+  // Stream ?(OnData m)
+  let streamData = ws => wsDataStream(ws) |> Stream.map(Option.some << onData)
+
+  let update
+    : ((state, msg)) => transitionType(state, msg)
+    = fun
     // Happy connection
     | (Idle | AttemptingRetry(_), Connect) => EffIO(Connecting, connect)
     | (Connecting | AttemptingRetry(_), OnConnectionOpen(ws)) => EffStream(Connected(ws), streamData(ws))
     | (Connected(ws) | ConnectedRxData(ws, _), OnData(data)) => Pure(ConnectedRxData(ws, data))
 
     // Data
-    | ((Connected(ws) | ConnectedRxData(ws, _)) as s, SendData(data)) => EffIO(s, sendWsData(ws, data) |> IO.map(const(None)))
+    | ((Connected(ws) | ConnectedRxData(ws, _)) as s, SendData(data)) =>
+        EffIO(s, sendWsData(ws, data) |> IO.map(const(None)))
 
     // On failure
-    | (Connected(_) | ConnectedRxData(_) | Connecting, OnFailure(_)) => EffIO(ConnectionFailed(maxRetries), retryConnection)
+    | (Connected(_) | ConnectedRxData(_) | Connecting, OnFailure(_)) =>
+        EffIO(ConnectionFailed(M.maxAutoRetries), retryConnection)
     | (AttemptingRetry(n), OnFailure(_)) => EffIO(ConnectionFailed(n - 1), retryConnection)
 
     // Auto and manual retrying
@@ -87,5 +97,5 @@ module WSStateChart = {
     | (s, _) => Pure(s)
 };
 
-module Machine = MakeStateMachine(WSStateChart);
+module Make = (M: WebsocketConfig) => MakeStateMachine(WSStateChart(M));
 

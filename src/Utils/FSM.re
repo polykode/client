@@ -1,4 +1,4 @@
-open Relude;
+open Relude.Globals;
 open CoreUtils;
 
 [@bs.deriving accessors]
@@ -23,39 +23,19 @@ module MakeStateMachine(M: StateChart) = {
     | EffIO(_, eff) => eff |> Effect.IOEff.fork(fn) |> Option.some
     | EffStream(_, eff) => eff |> Effect.StreamEff.fork(fn) |> const(None);
 
-  let make = (init, onStateChange) => {
-    let state = ref(init);
-
-    let getState = () => state.contents;
-    let rec dispatch = act => {
-      let setState = s => {
-        let hasUpdated = s !== state.contents;
-        state.contents = s;
-        if (hasUpdated) onStateChange(dispatch, s) |> ignore;
-        s;
-      };
-
-      act
-      |> transition(state.contents)
-      |> tap(setState << getStateFromTransition)
-      |> execute(ignore << Relude.Option.map(dispatch))
-      |> ignore;
-    };
-
-    (getState, dispatch);
-  }
-
   let use = init => {
     let (state, setState) = React.useState(_ => init);
-    let dispatch = React.useRef(_ => ());
+    let dispatchRef = React.useRef((_) => ());
 
-    React.useEffect0(() => {
-      let (_, disp) = make(init, (_, s) => setState(_ => s))
-      dispatch.current = disp;
-      None; // TODO: Cleanup?
-    });
-    
-    (state, dispatch);
+    dispatchRef.current = React.useCallback1(act =>
+      act
+      |> transition(state)
+      |> tap(setState << const << getStateFromTransition)
+      |> execute(ignore << Relude.Option.map(dispatchRef.current))
+      |> ignore
+    , [|state|]);
+
+    (state, dispatchRef.current);
   };
 }
 

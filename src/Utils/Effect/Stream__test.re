@@ -1,5 +1,4 @@
-module Js' = Js;
-open Relude
+open Relude.Globals;
 open TestFramework
 
 describe("Stream.make, Stream.fork", ({ testAsync }) => {
@@ -46,14 +45,14 @@ describe("Stream.make, Stream.fork", ({ testAsync }) => {
   testAsync("should cleanup on cancel from inside", ({ expect, callback }) => {
     let mockCleanupFunction = Mock.fn();
     let stream = Stream.make((~next as _, ~complete as _, ~cancel) => {
-      Js'.Global.setTimeout(cancel, 0) |> ignore;
+      Js.Global.setTimeout(cancel, 0) |> ignore;
       Some(mockCleanupFunction);
     });
 
     let _ = stream |> Stream.fork(fun
       | Cancelled => {
         expect.value(mockCleanupFunction |> Mock.calls).toEqual([|
-          [|Js'.undefined|]
+          [|Js.undefined|]
         |]);
         callback();
       }
@@ -74,7 +73,7 @@ describe("Stream.make, Stream.fork", ({ testAsync }) => {
 
     cleanup();
     expect.value(mockCleanupFunction |> Mock.calls).toEqual([|
-      [|Js'.undefined|]
+      [|Js.undefined|]
     |]);
   });
 });

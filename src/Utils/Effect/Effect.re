@@ -1,5 +1,4 @@
-open Relude
-open CoreUtils
+open Relude.Globals;
 
 type cleanup = unit => unit
 
