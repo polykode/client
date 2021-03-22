@@ -5,6 +5,8 @@ module WS = {
   open BsWebSocket;
 
   type t = BsWebSocket.t;
+  type data = string;
+  type error = string;
 
   let maxAutoRetries = 3;
 

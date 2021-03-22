@@ -3,19 +3,17 @@ open Relude.Globals;
 open FSM;
 
 type retryCount = int;
-type data = string;
-type error = string;
 
 [@bs.deriving accessors]
-type stateT('ws) =
+type stateT('ws, 'data, 'error) =
   | Idle
   | Connecting
   | Connected('ws)
-  | ConnectedRxData('ws, data)
+  | ConnectedRxData('ws, 'data)
   | AttemptingRetry(retryCount)
   | ConnectionFailed(retryCount)
   | Disconnected
-  | Failure(error);
+  | Failure('error);
 
 let showState = fun
   | Idle => "Idle"
@@ -28,26 +26,28 @@ let showState = fun
   | Failure(error) => "Failure(" ++ error ++ ")";
 
 [@bs.deriving accessors]
-type msgT('ws) =
+type msgT('ws, 'data, 'error) =
   | Connect
   | OnConnectionOpen('ws)
-  | OnData(data)
-  | SendData(data)
-  | OnFailure(error)
+  | OnData('data)
+  | SendData('data)
+  | OnFailure('error)
   | Retry;
 
 module type WebsocketApi = {
   type t
+  type data
+  type error
 
   let maxAutoRetries: int;
-  let createConnection: IO.t(t, string);
-  let sendData: t => string => Effect.IOEff.t(unit);
-  let getDataStream: t => Effect.StreamEff.t(string);
+  let createConnection: IO.t(t, error);
+  let sendData: t => data => Effect.IOEff.t(unit);
+  let getDataStream: t => Effect.StreamEff.t(data);
 };
 
 module WSStateChart = (WS: WebsocketApi) => {
-  type state = stateT(WS.t);
-  type msg = msgT(WS.t);
+  type state = stateT(WS.t, WS.data, WS.error);
+  type msg = msgT(WS.t, WS.data, WS.error);
 
   let connIO = WS.createConnection;
 
