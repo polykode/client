@@ -14,10 +14,10 @@ module type StateChart = {
   let update: ((state, msg)) => transitionType(state, msg);
 };
 
-let getStateFromTransition = fun | Pure(s) | EffIO(s, _) | EffStream(s, _) => s;
-
 module MakeStateMachine(M: StateChart) = {
   let transition = (state, msg) => (state, msg) |> M.update;
+  let getStateFromTransition = fun | Pure(s) | EffIO(s, _) | EffStream(s, _) => s;
+
   let execute = fn => fun
     | Pure(_) => Some(noop)
     | EffIO(_, eff) => eff |> Effect.IOEff.fork(fn) |> Option.some
@@ -27,12 +27,11 @@ module MakeStateMachine(M: StateChart) = {
     let (state, setState) = React.useState(_ => init);
     let dispatchRef = React.useRef((_) => ());
 
-    dispatchRef.current = React.useCallback1(act =>
-      act
-      |> transition(state)
-      |> tap(setState << const << getStateFromTransition)
-      |> execute(s => s |> Relude.Option.map(dispatchRef.current) |> ignore) // Note: pointful for a reason
-      |> ignore
+    dispatchRef.current = React.useCallback1(
+      ignore
+      << execute(s => s |> Relude.Option.map(dispatchRef.current) |> ignore) // Note: pointful for a reason
+      << tap(setState << const << getStateFromTransition)
+      << transition(state)
     , [|state|]);
 
     (state, dispatchRef.current);
