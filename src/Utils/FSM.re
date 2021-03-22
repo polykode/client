@@ -31,7 +31,7 @@ module MakeStateMachine(M: StateChart) = {
       act
       |> transition(state)
       |> tap(setState << const << getStateFromTransition)
-      |> execute(ignore << Relude.Option.map(dispatchRef.current))
+      |> execute(s => s |> Relude.Option.map(dispatchRef.current) |> ignore) // Note: pointful for a reason
       |> ignore
     , [|state|]);
 
