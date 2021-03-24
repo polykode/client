@@ -10,7 +10,7 @@ const fs = require('fs');
 const read = (fn) => fs.readFileSync(fn, 'utf8');
 const tailwindBaseWithDarkPath = './node_modules/tailwindcss/dist/tailwind-dark.css';
 
-const outputFile = './src/Vendor/Tailwind.re';
+const outputFile = './src/vendor/Tailwind.re';
 
 const objToMinimalElmTailwindClassFunction = obj => `
 let ${obj.elmName} = "${obj.name}"
