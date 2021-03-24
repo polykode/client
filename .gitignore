@@ -7,3 +7,4 @@ lib/
 dist/
 src/Vendor/Tailwind.re
 coverage
+build/

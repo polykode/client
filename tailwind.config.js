@@ -3,7 +3,7 @@ module.exports = {
   purge: [
     './src/*.html',
     './src/*.css',
-    './dist/bundle.js',
+    './build/js/*.js',
   ],
   theme: {
     extend: {},

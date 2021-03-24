@@ -2,5 +2,5 @@ open UiUtils;
 
 [@react.component]
 let make = () => {
-  <div className=Tailwind.(bg_blue_300)> "Home"->text </div>;
+  <div className=Tailwind.(bg_green_300)> "Home"->text </div>;
 };
