@@ -9,7 +9,7 @@ const HtmWebpackPlugin = require('html-webpack-plugin');
 const buildDir = path.resolve('./build');
 const srcDir = path.resolve('./src');
 
-const ENV = 'production';
+const ENV = process.env.NODE_ENV || 'development';
 
 const production = ENV === 'production';
 
@@ -53,16 +53,22 @@ module.exports = {
     ],
   },
   plugins: [
+    new HtmWebpackPlugin({ title: 'Loading... | Polykode' }),
+    new Cleanup(),
+  ].concat(!production ? [] : [
     new PurgeCSSPlugin({
       paths: glob.sync(path.join(buildDir, './**/*.js'), { nodir: true }).concat([
         path.join(srcDir, './index.html'),
       ]),
     }),
-    new HtmWebpackPlugin({ title: 'Loading... | Polykode' }),
     new MiniCssExtractPlugin({
       filename: '[name].[contenthash].css',
       chunkFilename: '[name].[contenthash].css',
     }),
-    new Cleanup(),
-  ],
+  ]),
+  devServer: {
+    compress: true,
+    host: '0.0.0.0',
+    port: 8080,
+  },
 };
