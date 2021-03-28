@@ -16,7 +16,8 @@
     "reason-react",
     "bs-bastet",
     "relude",
-    "@ryb73/bs-websockets"
+    "@ryb73/bs-websockets",
+    "bs-webapi"
   ],
   "package-specs": {
     "module": "es6",

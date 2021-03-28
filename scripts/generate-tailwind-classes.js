@@ -209,6 +209,6 @@ _.forOwn(contexts, ((ctx, ctxId) => { contexts[ctxId]['objects'] = _.sortBy(ctx[
 _.forOwn(contexts, ((ctx, ctxId) => {
   fs.writeFile(ctx['elmOut'], ctx['template'](ctx['objects']), (err) => {
     if (err) return console.log(err);
-    console.log('\nSuccessfully generated Elm file: ', ctx['elmOut']);
+    console.log('\nSuccessfully generated reasonml file: ', ctx['elmOut']);
   })
 }));
