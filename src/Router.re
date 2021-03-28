@@ -27,6 +27,17 @@ let fromPage =
   | Preview(id) => "/preview/" ++ String.fromInt(id)
   | NotFound => "/404";
 
-let gotoPage = push << fromPage;
+let gotoPage = ignore << push << fromPage;
+
+module Link = {
+  [@react.component]
+  let make = (~page: page, ~children) => <a
+    href=""
+    onClick={e => {
+      ReactEvent.Mouse.preventDefault(e);
+      gotoPage(page);
+    }}
+  >{children}</a>
+}
 
 let usePage = toPage << (u => u.path) << useUrl;

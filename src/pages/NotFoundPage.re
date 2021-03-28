@@ -2,5 +2,5 @@ open UiUtils;
 
 [@react.component]
 let make = () => {
-  <div> "Not found"->text </div>;
+  <div> "Not found boeyu"->text </div>;
 };
