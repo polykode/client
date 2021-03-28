@@ -38,7 +38,7 @@ let make = (~id: int) => {
   let (state, dispatch) = PolykodeCore.Machine.use(Websockets.Idle);
 
   React.useEffect0(() => {
-    dispatch(Websockets.Connect);
+    // dispatch(Websockets.Connect);
     None;
   });
 
@@ -50,7 +50,7 @@ let make = (~id: int) => {
   <div>
     <button
       className=Tailwind.(bg_blue_800)
-      onClick={_ => dispatch(Websockets.SendData("foobar boeyz"))}
+      // onClick={_ => dispatch(Websockets.SendData("foobar boeyz"))}
     >
       "Run"->text
     </button>

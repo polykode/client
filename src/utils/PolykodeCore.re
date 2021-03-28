@@ -12,7 +12,7 @@ module WS = {
   let maxAutoRetries = 3;
 
   let createConnection = IO.async(resolve => {
-    let ws = make("wss://echo.websocket.org");
+    let ws = make("ws://127.0.0.1:3005");
     ws->onError(resolve << Result.error << const("something went wrong"));
     ws->onOpen(resolve << Result.ok << const(ws));
   });
