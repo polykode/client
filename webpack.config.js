@@ -18,6 +18,7 @@ module.exports = {
   mode: ENV,
   output: {
     path: buildDir,
+    publicPath: '/',
     filename: '[name].[contenthash].js',
     chunkFilename: '[name].[contenthash].js',
   },
@@ -38,7 +39,11 @@ module.exports = {
     rules: [
       {
         test: /\.js$/i,
-        use: ['babel-loader'],
+        use: [
+          {
+            loader: 'babel-loader',
+          }
+        ],
       },
       {
         test: /\.css$/i,
@@ -49,6 +54,15 @@ module.exports = {
           'css-loader',
           'postcss-loader',
         ],
+      },
+      {
+        test: /\.(png|jpg|gif|ttf|eot|woff|woff2)$/i,
+        use: [
+          {
+            loader: 'url-loader',
+            options: { limit: 8192 }
+          }
+        ]
       },
     ],
   },
@@ -70,5 +84,7 @@ module.exports = {
     compress: true,
     host: '0.0.0.0',
     port: 8080,
+    historyApiFallback: true,
+    publicPath: '/',
   },
 };
