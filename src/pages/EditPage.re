@@ -1,29 +1,7 @@
 open Relude.Globals;
 open UiUtils;
 
-module CodeBlockUtil = {
-  type result = string;
-
-  type t = {
-    name: string,
-    lang: string,
-    code: string,
-    result: option(result),
-  }
-
-  let toJson = id;
-
-  let addResults
-    : array(t) => array(string) => array(t)
-    = blocks =>
-    Array.map(((block, res)) => {
-      ...block,
-      result: Some(res)
-    })
-    << Array.zip(blocks);
-};
-
-let defaultCodeBlocks: array(CodeBlockUtil.t) = [|
+let defaultCodeBlocks: array(CodeBlock.Block.t) = [|
   {
     name: "1",
     lang: "javascript",
@@ -38,19 +16,6 @@ let defaultCodeBlocks: array(CodeBlockUtil.t) = [|
   }
 |];
 
-
-type blockResult = {
-  stdout: string,
-}
-type blockData = {
-  result: blockResult,
-};
-type result = {
-  result: array(blockData),
-};
-
-[@bs.scope "JSON"] [@bs.val]
-external parseIntoResult: string => result = "parse"
 
 [@react.component]
 let make = (~id: int) => {
@@ -67,14 +32,10 @@ let make = (~id: int) => {
 
     switch state {
       | ConnectedRxData(_, data) => {
-        let newBlocks = 
-        setCodeBlocks(codeBlocks => {
-          data
-            |> parseIntoResult
-            |> (r => r.result)
-            |> Array.map((r: blockData) => r.result.stdout)
-            |> CodeBlockUtil.addResults(codeBlocks);
-        });
+        setCodeBlocks(codeBlocks => data
+          |> CodeBlock.Block.getResults
+          |> CodeBlock.Block.addResults(codeBlocks)
+        );
       }
       | _ => ()
     }
@@ -94,12 +55,12 @@ let make = (~id: int) => {
     <div>
       <div className=Tailwind.(bg_blue_500)>
         {"Header "->text} {id->number}
-        <button onClick={executeBlocks} className=Tailwind.(bg_red_300)>
+        <button onClick={executeBlocks} className=Tailwind.(bg_red_300 <+> p_2)>
           "EXECUTE BLOCKS"->text
         </button>
       </div>
       <div className=Tailwind.(bg_blue_100 <+> rounded_md <+> shadow_md <+> p_6)>
-        {codeBlocks |> Array.map((block: CodeBlockUtil.t) => {
+        {codeBlocks |> Array.map((block: CodeBlock.Block.t) => {
           <div className=Tailwind.(p_5) key={block.name}>
             <CodeBlock
               height="300px"
